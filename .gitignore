@@ -1,0 +1,11 @@
+.DS_Store
+*.swp
+*.swo
+
+tags
+types_c.vim
+
+build/
+
+*.pbxuser
+*.mode1v3
