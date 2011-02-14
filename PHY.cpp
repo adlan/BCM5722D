@@ -20,8 +20,7 @@
 #include "PHY.h"
 
 #pragma mark -
-#pragma mark - PHY initialization/reset
-#pragma mark -
+#pragma mark Initialization/Reset/Fixes
 
 bool BCM5722D::probePHY()
 {
@@ -254,154 +253,48 @@ IOReturn BCM5722D::resetPHY()
 } // resetPHY()
 
 
-void BCM5722D::resolveOperatingSpeedAndLinkDuplex(UInt16 status,
-                                                  LinkSpeed *speed,
-                                                  LinkDuplex *duplex)
+void BCM5722D::enableLoopback()
 {
-  switch (status & PHY_AUXSTAT_SPDDPLXMASK) {
+  int i;
+  UInt16 miiStatus;
 
-    case PHY_AUXSTAT_10HD:
-      *speed = kLinkSpeed10;
-      *duplex = kLinkDuplexHalf;
-      break;
+  writeMII(PHY_MIICTL, PHY_MIICTL_LOOPBACK);
 
-    case PHY_AUXSTAT_10FD:
-      *speed = kLinkSpeed10;
-      *duplex = kLinkDuplexFull;
-      break;
+  for (i = 0; i < 1500; i++) {
 
-    case PHY_AUXSTAT_100HD:
-      *speed = kLinkSpeed100;
-      *duplex = kLinkDuplexHalf;
+    if (!(readMII(PHY_MIISTAT, &miiStatus) & PHY_MIISTAT_LINKSTAT)) {
       break;
+    }
 
-    case PHY_AUXSTAT_100FD:
-      *speed = kLinkSpeed100;
-      *duplex = kLinkDuplexFull;
-      break;
-
-    case PHY_AUXSTAT_1000HD:
-      *speed = kLinkSpeed1000;
-      *duplex = kLinkDuplexHalf;
-      break;
-
-    case PHY_AUXSTAT_1000FD:
-      *speed = kLinkSpeed1000;
-      *duplex = kLinkDuplexFull;
-      break;
-
-    default:
-      *speed = kLinkSpeedNone;
-      *duplex = kLinkDuplexNone;
-      break;
+    IODelay(10);
 
   }
-} // resolveOperatingSpeedAndLinkDuplex()
+} // enableLoopback()
 
-/*
- * Called when to change medium
- */
-void BCM5722D::configureLinkAdvertisement(LinkSpeed linkSpeed,
-                                          LinkDuplex linkDuplex)
+
+// #tg3
+void BCM5722D::fixJitterBug()
 {
-  UInt16 advertiseFe = 0;
-  UInt16 advertiseGe = 0;
-
-  advertiseFe = PHY_AUTONEGADVERT_802_3;
-  advertiseFe |= resolvePauseAdvertisement(media.flowControl);
-
-  switch (linkSpeed) {
-
-    case kLinkSpeedNegotiate:
-
-      advertiseFe |= (PHY_AUTONEGADVERT_10FD |
-                      PHY_AUTONEGADVERT_10HD |
-                      PHY_AUTONEGADVERT_100FD |
-                      PHY_AUTONEGADVERT_100HD
-                      );
+  writeMII(PHY_AUXCTL, 0x0C00);
+  writeMII(PHY_DSPADDR, 0x000A);
+  writeMII(PHY_DSPRWPORT, 0x010B);
+  writeMII(PHY_AUXCTL, 0x0400);
+} // fixJitterBug()
 
 
-      if (!(phyFlags & PHYFLAG_FAST_ETHERNET)) {
-        advertiseGe = (PHY_1000BASETCTL_ADVERTHD |
-                       PHY_1000BASETCTL_ADVERTFD
-                       );
-      }
-
-      break;
-
-    case kLinkSpeed1000:
-
-      if (linkDuplex == kLinkDuplexFull) {
-        advertiseGe = PHY_1000BASETCTL_ADVERTFD;
-      } else {
-        advertiseGe = PHY_1000BASETCTL_ADVERTHD;
-      }
-
-      break;
-
-    case kLinkSpeed100:
-
-      if (linkDuplex == kLinkDuplexFull) {
-        advertiseFe |= PHY_AUTONEGADVERT_100FD;
-      } else {
-        advertiseFe |= PHY_AUTONEGADVERT_100HD;
-      }
-
-      break;
-
-    case kLinkSpeed10:
-
-      if (linkDuplex == kLinkDuplexFull) {
-        advertiseFe |= PHY_AUTONEGADVERT_10FD;
-      } else {
-        advertiseFe |= PHY_AUTONEGADVERT_10HD;
-      }
-
-      break;
-
-  }
-
-  DebugLog("advertiseFe: %X", advertiseFe);
-  DebugLog("advertiseGe: %X", advertiseGe);
-
-  writeMII(PHY_AUTONEGADVERT, advertiseFe);
-
-  if (!(phyFlags & PHYFLAG_FAST_ETHERNET)) {
-    writeMII(PHY_1000BASETCTL, advertiseGe);
-  }
-} // configureLinkAdvertisement()
-
-
-inline UInt16 BCM5722D::resolvePauseAdvertisement(FlowControl flowControl)
+// #tg3
+void BCM5722D::fixAdjustTrim()
 {
-  UInt16 advertise;
+  writeMII(PHY_AUXCTL, 0x0C00);
+  writeMII(PHY_DSPADDR, 0x000A);
+  writeMII(PHY_DSPRWPORT, 0x110B);
+  writeMII(PHY_TEST1, 0x0014);
+  writeMII(PHY_AUXCTL, 0x0400);
+} // fixAdjustTrim()
 
-  switch (flowControl) {
 
-    case kFlowControlRx:
-
-      advertise = (PHY_AUTONEGADVERT_PAUSECAP |
-                   PHY_AUTONEGADVERT_ASYMPAUSE
-                   );
-
-      break;
-
-    case kFlowControlTx:
-
-      advertise = PHY_AUTONEGADVERT_ASYMPAUSE;
-
-      break;
-
-    case kFlowControlSymmetric:
-
-      advertise = PHY_AUTONEGADVERT_PAUSECAP;
-
-      break;
-
-  }
-
-  return advertise;
-} // resolvePauseAdvertisement()
+#pragma mark -
+#pragma mark Medium
 
 
 void BCM5722D::addNetworkMedium(UInt32 type, UInt32 speed, UInt32 index)
@@ -507,91 +400,40 @@ IOReturn BCM5722D::setMedium(const IONetworkMedium *medium)
 } // setMedium()
 
 
-bool BCM5722D::startAutoNegotiation(LinkSpeed changeSpeed,
-                                    LinkDuplex changeDuplex)
+#pragma mark -
+#pragma mark Link
+
+
+inline UInt16 BCM5722D::resolvePauseAdvertisement(FlowControl flowControl)
 {
-  if (changeSpeed != kLinkSpeedNegotiate) {
-    Log("Advertising with limited capability, speed: %d MBps, %s duplex",
-        changeSpeed, (changeDuplex == kLinkDuplexFull ? "full" : "half"));
-  }
+  UInt16 advertise;
 
-  configureLinkAdvertisement(changeSpeed, changeDuplex);
+  switch (flowControl) {
 
-  UInt16 adv;
-  readMII(PHY_AUTONEGADVERT, &adv);
-  DebugLog("Adv reg: %X", adv);
+    case kFlowControlRx:
 
-  writeMII(PHY_MIICTL, (PHY_MIICTL_AUTONEGENABLE |
-                        PHY_MIICTL_RESTARTAUTONEG));
-
-  return true;
-} // startAutoNegotiation()
-
-bool BCM5722D::forceLinkSpeedDuplex(LinkSpeed changeSpeed,
-                                    LinkDuplex changeDuplex)
-{
-  Log("Forcing link speed: %d MBps, %s duplex",
-      changeSpeed, (changeDuplex == kLinkDuplexFull ? "full" : "half"));
-
-  UInt16 miiCtl;
-
-  switch (changeSpeed) {
-
-    case kLinkSpeed10:
-      miiCtl = PHY_MIICTL_SPEED_10;
+      advertise = (PHY_AUTONEGADVERT_PAUSECAP |
+                   PHY_AUTONEGADVERT_ASYMPAUSE
+                   );
 
       break;
 
-    case kLinkSpeed100:
-      miiCtl = PHY_MIICTL_SPEED_100;
+    case kFlowControlTx:
+
+      advertise = PHY_AUTONEGADVERT_ASYMPAUSE;
 
       break;
 
-    case kLinkSpeed1000:
-      miiCtl = (PHY_MIICTL_SPEED_1000 |
-                PHY_MIICTL_AUTONEGENABLE |
-                PHY_MIICTL_RESTARTAUTONEG
-                );
+    case kFlowControlSymmetric:
 
-      configureLinkAdvertisement(changeSpeed, changeDuplex);
-
-      autoNegotiate = true;
+      advertise = PHY_AUTONEGADVERT_PAUSECAP;
 
       break;
 
   }
 
-  if (changeDuplex == kLinkDuplexFull) {
-    miiCtl |= PHY_MIICTL_DUPLEX_FULL;
-  }
-
-  enableLoopback();
-
-  writeMII(PHY_MIICTL, miiCtl);
-
-  configureMAC(changeSpeed, changeDuplex);
-
-  return true;
-} // forceLinkSpeedDuplex()
-
-
-void BCM5722D::enableLoopback()
-{
-  int i;
-  UInt16 miiStatus;
-
-  writeMII(PHY_MIICTL, PHY_MIICTL_LOOPBACK);
-
-  for (i = 0; i < 1500; i++) {
-
-    if (!(readMII(PHY_MIISTAT, &miiStatus) & PHY_MIISTAT_LINKSTAT)) {
-      break;
-    }
-
-    IODelay(10);
-
-  }
-} // enableLoopback()
+  return advertise;
+} // resolvePauseAdvertisement()
 
 
 void BCM5722D::setupFlowControl(UInt16 local, UInt16 partner)
@@ -644,6 +486,218 @@ setupFlowControlDone:
   media.flowControl = flowControl;
 } // setupFlowControl()
 
+
+void BCM5722D::configureLinkAdvertisement(LinkSpeed linkSpeed,
+                                          LinkDuplex linkDuplex)
+{
+  UInt16 advertiseFe = 0;
+  UInt16 advertiseGe = 0;
+
+  advertiseFe = PHY_AUTONEGADVERT_802_3;
+  advertiseFe |= resolvePauseAdvertisement(media.flowControl);
+
+  switch (linkSpeed) {
+
+    case kLinkSpeedNegotiate:
+
+      advertiseFe |= (PHY_AUTONEGADVERT_10FD |
+                      PHY_AUTONEGADVERT_10HD |
+                      PHY_AUTONEGADVERT_100FD |
+                      PHY_AUTONEGADVERT_100HD
+                      );
+
+
+      if (!(phyFlags & PHYFLAG_FAST_ETHERNET)) {
+        advertiseGe = (PHY_1000BASETCTL_ADVERTHD |
+                       PHY_1000BASETCTL_ADVERTFD
+                       );
+      }
+
+      break;
+
+    case kLinkSpeed1000:
+
+      if (linkDuplex == kLinkDuplexFull) {
+        advertiseGe = PHY_1000BASETCTL_ADVERTFD;
+      } else if (linkDuplex == kLinkDuplexHalf) {
+        advertiseGe = PHY_1000BASETCTL_ADVERTHD;
+      } else {
+        advertiseGe = (PHY_1000BASETCTL_ADVERTFD |
+                       PHY_1000BASETCTL_ADVERTHD
+                       );
+      }
+
+      break;
+
+    case kLinkSpeed100:
+
+      if (linkDuplex == kLinkDuplexFull) {
+        advertiseFe |= PHY_AUTONEGADVERT_100FD;
+      } else if (linkDuplex == kLinkDuplexHalf) {
+        advertiseFe |= PHY_AUTONEGADVERT_100HD;
+      } else {
+        advertiseFe |= (PHY_AUTONEGADVERT_100FD |
+                        PHY_AUTONEGADVERT_100HD
+                        );
+      }
+
+      break;
+
+    case kLinkSpeed10:
+
+      if (linkDuplex == kLinkDuplexFull) {
+        advertiseFe |= PHY_AUTONEGADVERT_10FD;
+      } else if (linkDuplex == kLinkDuplexHalf) {
+        advertiseFe |= PHY_AUTONEGADVERT_10HD;
+      } else {
+        advertiseFe |= (PHY_AUTONEGADVERT_10FD |
+                        PHY_AUTONEGADVERT_10HD
+                        );
+      }
+
+      break;
+
+  }
+
+  DebugLog("advertiseFe: %X", advertiseFe);
+  DebugLog("advertiseGe: %X", advertiseGe);
+
+  writeMII(PHY_AUTONEGADVERT, advertiseFe);
+
+  if (!(phyFlags & PHYFLAG_FAST_ETHERNET)) {
+    writeMII(PHY_1000BASETCTL, advertiseGe);
+  }
+} // configureLinkAdvertisement()
+
+
+bool BCM5722D::startAutoNegotiation(LinkSpeed changeSpeed,
+                                    LinkDuplex changeDuplex)
+{
+  if (changeSpeed != kLinkSpeedNegotiate) {
+    Log("Advertising with limited capability, speed: %d MBps, %s duplex",
+        changeSpeed, (changeDuplex == kLinkDuplexFull ? "full" : "half"));
+  }
+
+  configureLinkAdvertisement(changeSpeed, changeDuplex);
+
+  UInt16 adv;
+  readMII(PHY_AUTONEGADVERT, &adv);
+  DebugLog("Adv reg: %X", adv);
+
+  writeMII(PHY_MIICTL, (PHY_MIICTL_AUTONEGENABLE |
+                        PHY_MIICTL_RESTARTAUTONEG));
+
+  return true;
+} // startAutoNegotiation()
+
+
+bool BCM5722D::forceLinkSpeedDuplex(LinkSpeed changeSpeed,
+                                    LinkDuplex changeDuplex)
+{
+  Log("Forcing link speed: %d MBps, %s duplex",
+      changeSpeed, (changeDuplex == kLinkDuplexFull ? "full" : "half"));
+
+  UInt16 miiCtl;
+
+  switch (changeSpeed) {
+
+    case kLinkSpeed10:
+      miiCtl = PHY_MIICTL_SPEED_10;
+
+      break;
+
+    case kLinkSpeed100:
+      miiCtl = PHY_MIICTL_SPEED_100;
+
+      break;
+
+    case kLinkSpeed1000:
+      miiCtl = (PHY_MIICTL_SPEED_1000 |
+                PHY_MIICTL_AUTONEGENABLE |
+                PHY_MIICTL_RESTARTAUTONEG
+                );
+
+      configureLinkAdvertisement(changeSpeed, changeDuplex);
+
+      autoNegotiate = true;
+
+      break;
+
+  }
+
+  if (changeDuplex == kLinkDuplexFull) {
+    miiCtl |= PHY_MIICTL_DUPLEX_FULL;
+  }
+
+  enableLoopback();
+
+  writeMII(PHY_MIICTL, miiCtl);
+
+  configureMAC(changeSpeed, changeDuplex);
+
+  return true;
+} // forceLinkSpeedDuplex()
+
+
+void BCM5722D::resolveOperatingSpeedAndLinkDuplex(UInt16 status,
+                                                  LinkSpeed *speed,
+                                                  LinkDuplex *duplex)
+{
+  switch (status & PHY_AUXSTAT_SPDDPLXMASK) {
+
+    case PHY_AUXSTAT_10HD:
+
+      *speed = kLinkSpeed10;
+      *duplex = kLinkDuplexHalf;
+
+      break;
+
+    case PHY_AUXSTAT_10FD:
+
+      *speed = kLinkSpeed10;
+      *duplex = kLinkDuplexFull;
+
+      break;
+
+    case PHY_AUXSTAT_100HD:
+
+      *speed = kLinkSpeed100;
+      *duplex = kLinkDuplexHalf;
+
+      break;
+
+    case PHY_AUXSTAT_100FD:
+
+      *speed = kLinkSpeed100;
+      *duplex = kLinkDuplexFull;
+
+      break;
+
+    case PHY_AUXSTAT_1000HD:
+
+      *speed = kLinkSpeed1000;
+      *duplex = kLinkDuplexHalf;
+
+      break;
+
+    case PHY_AUXSTAT_1000FD:
+
+      *speed = kLinkSpeed1000;
+      *duplex = kLinkDuplexFull;
+
+      break;
+
+    default:
+
+      *speed = kLinkSpeedNone;
+      *duplex = kLinkDuplexNone;
+
+      break;
+
+  }
+} // resolveOperatingSpeedAndLinkDuplex()
+
+
 // #tg3
 void BCM5722D::enableAutoMDIX(bool active)
 {
@@ -692,6 +746,7 @@ void BCM5722D::enableAutoMDIX(bool active)
   }
 } // enableAutoMDIX()
 
+
 // #tg3 - tg3_phy_set_wirespeed
 void BCM5722D::enableEthernetAtWirespeed()
 {
@@ -727,32 +782,7 @@ inline void BCM5722D::reportLinkStatus()
 
 
 #pragma mark -
-#pragma mark - PHY fixes
-#pragma mark -
-
-
-void BCM5722D::fixJitterBug()
-{
-  writeMII(PHY_AUXCTL, 0x0C00);
-  writeMII(PHY_DSPADDR, 0x000A);
-  writeMII(PHY_DSPRWPORT, 0x010B);
-  writeMII(PHY_AUXCTL, 0x0400);
-} // fixJitterBug()
-
-
-void BCM5722D::fixAdjustTrim()
-{
-  writeMII(PHY_AUXCTL, 0x0C00);
-  writeMII(PHY_DSPADDR, 0x000A);
-  writeMII(PHY_DSPRWPORT, 0x110B);
-  writeMII(PHY_TEST1, 0x0014);
-  writeMII(PHY_AUXCTL, 0x0400);
-} // fixAdjustTrim()
-
-
-#pragma mark -
-#pragma mark - Interrupt handling
-#pragma mark -
+#pragma mark Interrupt handling
 
 
 void BCM5722D::serviceLinkInterrupt()
@@ -773,8 +803,7 @@ void BCM5722D::serviceLinkInterrupt()
 
 
 #pragma mark -
-#pragma mark - Reader/Writer methods
-#pragma mark -
+#pragma mark Reader/Writer methods
 
 
 IOReturn BCM5722D::writeMII(UInt8 reg, UInt16 value)
