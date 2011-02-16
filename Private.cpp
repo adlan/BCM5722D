@@ -31,7 +31,6 @@ bool BCM5722D::resetAdapter()
   UInt32 reset;
   UInt32 value;
   UInt16 pciCommand;
-  int    i;
 
   enableInterrupts(false);
 
@@ -114,6 +113,8 @@ bool BCM5722D::resetAdapter()
 
   // Step 16
   // #tg3
+  int i;
+
   if (GET_ASICREV(asicRevision) == ASICREV_C) {
 
     for (i = 0; i < 200; i++) {
@@ -158,9 +159,8 @@ bool BCM5722D::initializeAdapter()
 
   writeCSR(BPCI_MEMWINBASEADDR, 0);
 
-  // TODO:
-  // Code to calculate DMA value or this value is applicable to
-  // all supported models?.
+  // #tg3
+  // 0x40180000
   writeCSR(BPCI_DMARWCTL, 0x76180000);
 
   // Step 22
@@ -245,7 +245,7 @@ bool BCM5722D::initializeAdapter()
 
     }
 
-    // #tg3 - Calculated from Linux:TG3_RX_INTERNAL_RING_SZ_5906 / 2
+    // #tg3 - Calculated from TG3_RX_INTERNAL_RING_SZ_5906 / 2
     value = 16;
 
   }
@@ -263,8 +263,7 @@ bool BCM5722D::initializeAdapter()
   writeCSR(address + RCB_NICADDR, SRAM_TX_RING);
 
   // Step 37
-  // BCM5755/M supports up to 4 receive return ring. Disable
-  // the other 3
+  // BCM5755/M supports up to 4 receive return ring. Disable the other 3
   if (GET_ASICREV(asicRevision) == ASICREV_A) {
 
     value = SRAM_RXR_RING_RCB + SRAM_RXR_RING_RCB_NEXT * 4;
@@ -887,42 +886,10 @@ bool BCM5722D::setupDriver(IOService *provider)
     return false;
   }
 
-  // TODO: verify if this is needed
-  // http://lists.apple.com/archives/Darwin-drivers/2007/Jan/msg00020.html
-
-  int source = -1;
-  int interruptIndex = 0;
-  int interruptType;
-
-  while (true) {
-
-    if ((provider->getInterruptType(interruptIndex, &interruptType))
-        != kIOReturnSuccess) {
-      break;
-    }
-
-    if (interruptType & kIOInterruptTypePCIMessaged) {
-      // Only the first one is used in normal operation
-      source = interruptIndex;
-      break;
-    }
-
-    interruptIndex++;
-  }
-
-  if (source == -1) {
-
-    Log("Could not find MSI index");
-    return false;
-
-  }
-
-  DebugLog("MSI index on %d", source);
-
   interruptSource = IOInterruptEventSource::interruptEventSource(
       this, OSMemberFunctionCast(IOInterruptEventAction, this,
                                  &BCM5722D::interruptOccurred),
-      provider, source);
+      provider, 1);
 
   if (!interruptSource ||
       (tWorkLoop->addEventSource(interruptSource) != kIOReturnSuccess)) {
