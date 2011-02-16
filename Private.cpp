@@ -160,7 +160,7 @@ bool BCM5722D::initializeAdapter()
   writeCSR(BPCI_MEMWINBASEADDR, 0);
 
   // #tg3
-  // 0x40180000
+  // 0x40180000 ?
   writeCSR(BPCI_DMARWCTL, 0x76180000);
 
   // Step 22
