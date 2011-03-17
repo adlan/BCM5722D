@@ -221,7 +221,7 @@ IOReturn BCM5722D::setMulticastList(IOEthernetAddress *addrs, UInt32 count)
 
     for (i = 0; i < count; i++) {
 
-      crc = computeEthernetCRC((const UInt8 *)addrs, 6);
+      crc = computeEthernetCRC((const UInt8 *)(addrs + i), 6);
       bitPosition = ~crc & 0x7F;
       regIndex = (bitPosition & 0x60) >> 5;
       bitPosition &= 0x1F;
