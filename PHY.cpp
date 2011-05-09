@@ -54,7 +54,10 @@ bool BCM5722D::probePHY()
     phyFlags |= PHYFLAG_BUG_ADJUST_TRIM;
   }
 
-  phyFlags |= PHYFLAG_BUG_JITTER;
+  if (deviceID != DEVICEID_BCM5722) {
+    phyFlags |= PHYFLAG_BUG_JITTER;
+  }
+
 
   return true;
 } // probePHY()

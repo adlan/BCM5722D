@@ -27,6 +27,7 @@ static const struct SupportedDevice
   UInt16 id;
   const char *model;
 } devices[] = {
+  { DEVICEID_BCM5722,  "BCM5722 NetXtreme Server Gigabit Ethernet" },
   { DEVICEID_BCM5754,  "BCM5754 NetXtreme Gigabit Ethernet" },
   { DEVICEID_BCM5754M, "BCM5754M NetXtreme Gigabit Ethernet" },
   { DEVICEID_BCM5755,  "BCM5755 NetXtreme Gigabit Ethernet" },

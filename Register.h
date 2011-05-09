@@ -21,6 +21,7 @@
 
 #define BIT(x)    (1 << (x))
 
+#define DEVICEID_BCM5722                  0x165A
 #define DEVICEID_BCM5754                  0x167A
 #define DEVICEID_BCM5754M                 0x1672
 #define DEVICEID_BCM5755                  0x167B
