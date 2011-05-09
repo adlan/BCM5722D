@@ -245,7 +245,7 @@ class BCM5722D : public IOEthernetController
   bool     setupPHY();
   IOReturn resetPHY();
   void     acknowledgeInterrupt();
-  void     configureMAC(LinkSpeed speed, LinkDuplex duplex);
+  void     configureMAC();
   void     enableLoopback();
   void     fixJitterBug();
   void     fixAdjustTrim();
@@ -272,9 +272,7 @@ class BCM5722D : public IOEthernetController
                                 LinkDuplex changeDuplex);
   bool     forceLinkSpeedDuplex(LinkSpeed changeSpeed,
                                 LinkDuplex changeDuplex);
-  void     resolveOperatingSpeedAndLinkDuplex(UInt16 status,
-                                              LinkSpeed *speed,
-                                              LinkDuplex *duplex);
+  void     resolveOperatingSpeedAndLinkDuplex(UInt16 status);
   void     enableAutoMDIX(bool active);
   void     enableEthernetAtWirespeed();
   void     reportLinkStatus();

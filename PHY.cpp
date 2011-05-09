@@ -28,8 +28,9 @@ bool BCM5722D::probePHY()
   UInt16 id2;
 
   // Set default value
-  phyFlags      = 0;
-  autoNegotiate = true;
+  phyFlags           = 0;
+  autoNegotiate      = true;
+  currentMediumIndex = kMediumTypeIndexAuto;
 
   media.reset();
 
@@ -69,8 +70,6 @@ bool BCM5722D::setupPHY()
 
   UInt16     miiStatus;
   UInt16     miiControl;
-  LinkSpeed  currentSpeed   = kLinkSpeedNone;
-  LinkDuplex currentDuplex  = kLinkDuplexNone;
 
   readMII(PHY_MIISTAT, &miiStatus);
   readMII(PHY_MIISTAT, &miiStatus);
@@ -96,12 +95,7 @@ bool BCM5722D::setupPHY()
 
     DebugLog("Auxillary status: %X", auxStat);
 
-    resolveOperatingSpeedAndLinkDuplex(auxStat,
-                                       &currentSpeed,
-                                       &currentDuplex);
-
-    media.speed = currentSpeed;
-    media.duplex = currentDuplex;
+    resolveOperatingSpeedAndLinkDuplex(auxStat);
 
     readMII(PHY_MIICTL, &miiControl);
 
@@ -112,7 +106,7 @@ bool BCM5722D::setupPHY()
 
     }
 
-    if (currentDuplex == kLinkDuplexFull) {
+    if (media.duplex == kLinkDuplexFull) {
       setupFlowControl(local, partner);
     } else {
       media.flowControl = kFlowControlDisabled;
@@ -122,7 +116,7 @@ bool BCM5722D::setupPHY()
   media.state = ((miiStatus & PHY_MIISTAT_LINKSTAT)
                  ? kLinkStateUp : kLinkStateDown);
 
-  configureMAC(currentSpeed, currentDuplex);
+  configureMAC();
 
   writeCSR(EMAC_EVENT, EMAC_EVENT_LNKSTATECHGD);
   IODelay(40);
@@ -154,13 +148,13 @@ void BCM5722D::acknowledgeInterrupt()
 } // acknowledgeInterrupt()
 
 
-void BCM5722D::configureMAC(LinkSpeed speed, LinkDuplex duplex) {
-
+void BCM5722D::configureMAC()
+{
   macMode &= ~EMAC_MODE_PORTMODE_MASK;
 
-  if (speed == kLinkSpeed10 || speed == kLinkSpeed100) {
+  if (media.speed == kLinkSpeed10 || media.speed == kLinkSpeed100) {
     macMode |= EMAC_MODE_PORTMODE_MII;
-  } else if (speed == kLinkSpeed1000) {
+  } else if (media.speed == kLinkSpeed1000) {
     macMode |= EMAC_MODE_PORTMODE_GMII;
   } else {
 
@@ -173,14 +167,14 @@ void BCM5722D::configureMAC(LinkSpeed speed, LinkDuplex duplex) {
 
   macMode &= ~EMAC_MODE_HALFDUPLEX;
 
-  if (duplex == kLinkDuplexHalf){
+  if (media.duplex == kLinkDuplexHalf){
     macMode |= EMAC_MODE_HALFDUPLEX;
   }
 
   writeCSR(EMAC_MODE, macMode);
   IODelay(40);
 
-  if (speed == kLinkSpeed1000 && duplex == kLinkDuplexHalf) {
+  if (media.speed == kLinkSpeed1000 && media.duplex == kLinkDuplexHalf) {
     writeCSR(EMAC_TXLEN, 0x26FF);
   } else {
     writeCSR(EMAC_TXLEN, 0x2620);
@@ -392,9 +386,8 @@ IOReturn BCM5722D::setMedium(const IONetworkMedium *medium)
     startAutoNegotiation(changeSpeed, changeDuplex);
   } else {
     forceLinkSpeedDuplex(changeSpeed, changeDuplex);
+    currentMediumIndex = medium->getIndex();
   }
-
-  currentMediumIndex = medium->getIndex();
 
   return kIOReturnSuccess;
 } // setMedium()
@@ -640,64 +633,68 @@ bool BCM5722D::forceLinkSpeedDuplex(LinkSpeed changeSpeed,
 
   writeMII(PHY_MIICTL, miiCtl);
 
-  configureMAC(changeSpeed, changeDuplex);
+  configureMAC();
 
   return true;
 } // forceLinkSpeedDuplex()
 
 
-void BCM5722D::resolveOperatingSpeedAndLinkDuplex(UInt16 status,
-                                                  LinkSpeed *speed,
-                                                  LinkDuplex *duplex)
+void BCM5722D::resolveOperatingSpeedAndLinkDuplex(UInt16 status)
 {
   switch (status & PHY_AUXSTAT_SPDDPLXMASK) {
 
     case PHY_AUXSTAT_10HD:
 
-      *speed = kLinkSpeed10;
-      *duplex = kLinkDuplexHalf;
+      media.speed = kLinkSpeed10;
+      media.duplex = kLinkDuplexHalf;
+      currentMediumIndex = kMediumTypeIndex10HD;
 
       break;
 
     case PHY_AUXSTAT_10FD:
 
-      *speed = kLinkSpeed10;
-      *duplex = kLinkDuplexFull;
+      media.speed = kLinkSpeed10;
+      media.duplex = kLinkDuplexFull;
+      currentMediumIndex = kMediumTypeIndex10FD;
 
       break;
 
     case PHY_AUXSTAT_100HD:
 
-      *speed = kLinkSpeed100;
-      *duplex = kLinkDuplexHalf;
+      media.speed = kLinkSpeed100;
+      media.duplex = kLinkDuplexHalf;
+      currentMediumIndex = kMediumTypeIndex100HD;
 
       break;
 
     case PHY_AUXSTAT_100FD:
 
-      *speed = kLinkSpeed100;
-      *duplex = kLinkDuplexFull;
+      media.speed = kLinkSpeed100;
+      media.duplex = kLinkDuplexFull;
+      currentMediumIndex = kMediumTypeIndex100FD;
 
       break;
 
     case PHY_AUXSTAT_1000HD:
 
-      *speed = kLinkSpeed1000;
-      *duplex = kLinkDuplexHalf;
+      media.speed = kLinkSpeed1000;
+      media.duplex = kLinkDuplexHalf;
+      currentMediumIndex = kMediumTypeIndex1000HD;
 
       break;
 
     case PHY_AUXSTAT_1000FD:
 
-      *speed = kLinkSpeed1000;
-      *duplex = kLinkDuplexFull;
+      media.speed = kLinkSpeed1000;
+      media.duplex = kLinkDuplexFull;
+      currentMediumIndex = kMediumTypeIndex1000HD;
 
       break;
 
     default:
 
-      *speed = kLinkSpeedNone;
-      *duplex = kLinkDuplexNone;
+      media.speed = kLinkSpeedNone;
+      media.duplex = kLinkDuplexNone;
 
       break;
 
@@ -800,7 +797,8 @@ void BCM5722D::serviceLinkInterrupt()
 
   if (media.state == kLinkStateUp) {
     setLinkStatus(kIONetworkLinkValid | kIONetworkLinkActive,
-                  getSelectedMedium(), media.speed * MBit);
+                  IONetworkMedium::getMediumWithIndex(mediumDict,
+                                                      currentMediumIndex));
   } else {
     setLinkStatus(kIONetworkLinkValid, 0);
   }
