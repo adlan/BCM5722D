@@ -28,11 +28,10 @@ bool BCM5722D::probePHY()
   UInt16 id2;
 
   // Set default value
-  phyFlags            = 0;
-  autoNegotiate       = true;
-  media.speed         = kLinkSpeedNone;
-  media.duplex        = kLinkDuplexNone;
-  media.flowControl   = kFlowControlSymmetric;
+  phyFlags      = 0;
+  autoNegotiate = true;
+
+  media.reset();
 
   readMII(PHY_ID1, &id1);
   readMII(PHY_ID2, &id2);
@@ -61,13 +60,9 @@ bool BCM5722D::probePHY()
 } // probePHY()
 
 
-bool BCM5722D::setupPHY(bool reset)
+bool BCM5722D::setupPHY()
 {
   acknowledgeInterrupt();
-
-  if (reset) {
-    resetPHY();
-  }
 
   UInt16     miiStatus;
   UInt16     miiControl;
@@ -388,6 +383,8 @@ IOReturn BCM5722D::setMedium(const IONetworkMedium *medium)
             (changeDuplex == kLinkDuplexHalf ? "kLinkDuplexHalf" :
              "kLinkDuplexNegotiate")));
 
+  media.reset();
+
   if (autoNegotiate) {
     startAutoNegotiation(changeSpeed, changeDuplex);
   } else {
@@ -603,11 +600,13 @@ bool BCM5722D::forceLinkSpeedDuplex(LinkSpeed changeSpeed,
 
     case kLinkSpeed10:
       miiCtl = PHY_MIICTL_SPEED_10;
+      media.speed = kLinkSpeed10;
 
       break;
 
     case kLinkSpeed100:
       miiCtl = PHY_MIICTL_SPEED_100;
+      media.speed = kLinkSpeed100;
 
       break;
 
@@ -616,6 +615,7 @@ bool BCM5722D::forceLinkSpeedDuplex(LinkSpeed changeSpeed,
                 PHY_MIICTL_AUTONEGENABLE |
                 PHY_MIICTL_RESTARTAUTONEG
                 );
+      media.speed = kLinkSpeed100;
 
       configureLinkAdvertisement(changeSpeed, changeDuplex);
 
@@ -627,6 +627,10 @@ bool BCM5722D::forceLinkSpeedDuplex(LinkSpeed changeSpeed,
 
   if (changeDuplex == kLinkDuplexFull) {
     miiCtl |= PHY_MIICTL_DUPLEX_FULL;
+    media.duplex = kLinkDuplexFull;
+  } else {
+    media.duplex = kLinkDuplexHalf;
+    media.flowControl = kFlowControlDisabled;
   }
 
   enableLoopback();

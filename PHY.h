@@ -19,12 +19,15 @@
 #ifndef BCM5722D_PHY_H
 #define BCM5722D_PHY_H
 
-#define PHYID_OUI(id)     (((id) >> 10) & 0x0000FFFF)
-#define PHYID_MODEL(id)   (((id) >> 4) & 0x0000003F)
-#define PHYID_REV(id)     ((id) & 0x0000000F)
+#define PHYID_OUI(id)   (((id) >> 10) & 0x0000FFFF)
+#define PHYID_MODEL(id) (((id) >> 4) & 0x0000003F)
+#define PHYID_REV(id)   ((id) & 0x0000000F)
 
 #define MBit 1000000
 
+
+/** Flow control
+ */
 enum FlowControl
 {
   kFlowControlDisabled = 0,
@@ -34,6 +37,8 @@ enum FlowControl
 };
 
 
+/** Medium type
+ */
 enum
 {
   kMediumTypeIndexAuto = 0,
@@ -47,6 +52,8 @@ enum
 };
 
 
+/** Link duplex
+ */
 enum LinkDuplex
 {
   kLinkDuplexFull,
@@ -56,6 +63,8 @@ enum LinkDuplex
 };
 
 
+/** Link speed
+ */
 enum LinkSpeed
 {
   kLinkSpeedNone = 0,
@@ -66,6 +75,8 @@ enum LinkSpeed
 };
 
 
+/** Link state
+ */
 enum LinkState
 {
   kLinkStateUp,
@@ -73,6 +84,8 @@ enum LinkState
 };
 
 
+/** Miscellaneous
+ */
 enum
 {
   kAutoNegotiationDelay = 50,
@@ -80,12 +93,21 @@ enum
 };
 
 
+/** Stores current media state
+ */
 struct MediaStatus
 {
   LinkDuplex  duplex;
   LinkSpeed   speed;
   LinkState   state;
   FlowControl flowControl;
+
+  void reset()
+  {
+    speed = kLinkSpeedNone;
+    duplex = kLinkDuplexNone;
+    flowControl = kFlowControlSymmetric;
+  }
 };
 
 #endif

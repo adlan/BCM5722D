@@ -51,11 +51,13 @@ enum
   kWatchDogTimeout   = 5000  // ms
 };
 
+
 enum BOption
 {
   kOptionDefault = 0,
-  kBDOptionReuse              // configureRxDescriptor option
+  kBDOptionReuse,      // [configureRxDescriptor] Reuse the buffer descriptor
 };
+
 
 class BCM5722D : public IOEthernetController
 {
@@ -240,7 +242,7 @@ class BCM5722D : public IOEthernetController
 #pragma mark Initialization/Reset/Fixes
 
   bool     probePHY();
-  bool     setupPHY(bool reset = false);
+  bool     setupPHY();
   IOReturn resetPHY();
   void     acknowledgeInterrupt();
   void     configureMAC(LinkSpeed speed, LinkDuplex duplex);
