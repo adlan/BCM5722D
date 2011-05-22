@@ -34,12 +34,12 @@
 			<string>my_name_adlan_BCM5722D</string>
 			<key>IONameMatch</key>
 			<array>
-				<string>pci14e4,165A</string>
-				<string>pci14e4,167A</string>
+				<string>pci14e4,165a</string>
+				<string>pci14e4,167a</string>
 				<string>pci14e4,1672</string>
-				<string>pci14e4,167B</string>
+				<string>pci14e4,167b</string>
 				<string>pci14e4,1673</string>
-				<string>pci14e4,169B</string>
+				<string>pci14e4,169b</string>
 				<string>pci14e4,1693</string>
 				<string>pci14e4,1712</string>
 				<string>pci14e4,1713</string>
@@ -63,5 +63,7 @@
 		<key>com.apple.kpi.mach</key>
 		<string>10.0</string>
 	</dict>
+	<key>OSBundleRequired</key>
+	<string>Network-Root</string>
 </dict>
 </plist>
