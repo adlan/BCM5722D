@@ -1,23 +1,36 @@
 BCM5722D
 ========
 
-Unofficial Broadcom **BCM5754/M**, **BCM5755/M**, **BCM5787/M** and
-**BCM5906/M** driver for Mac OS X 10.6.X. It is implemented based on the
-BCM5722 Programmer\'s Guide provided in Broadcom\'s open source
-developer resource. Additional information is gleaned from Linux(tg3)
-and FreeBSD(if\_bge) driver.
+Unofficial Mac OS X driver for Broadcom's BCM5722 NetXtreme and NetLink
+family of gigabit Ethernet controllers. It is implemented based on the
+BCM5722 Programmer\'s Guide provided in Broadcom\'s open source developer
+resource. Additional information is gleaned from Linux(tg3) and
+FreeBSD(if\_bge) driver.
 
+It supports the following models:
 
-Additional model has been tested and
-
-* BCM5784M
-
+* BCM5722
+* BCM5754
+* BCM5754M
+* BCM5755
+* BCM5755M
+* BCM5787
+* BCM5787M
+* BCM5906
+* BCM5906M
 
 Installation
 ------------
 
-Install to `/System/Library/Extensions` and make sure permission it has the
-appropriate permission or simply use [KextWizard](http://www.insanelymac.com/forum/index.php?showtopic=253395).
+Install to `/System/Library/Extensions`
+
+Method of installation
+
+* Manually copy the kext to /S/L/E and repair permissions, or
+* Use [KextWizard](http://www.insanelymac.com/forum/index.php?showtopic=253395).
+
+Issues
+------
 
 Please report any issues you found at <https://github.com/adlan/BCM5722D/issues>
 
@@ -37,11 +50,11 @@ license information.
 Credits
 -------
 
-* Early beta testers from InsanelyMac forum
-  (acero,Hacktrix2006,quadomatic,queshaolangman,Zprood)
+* Early beta testers at the InsanelyMac forum (acero, Hacktrix2006, quadomatic,
+  queshaolangman, Zprood)
+* tg3(Linux) and bge(FreeeBSD) driver authors
 
 Disclaimer
 ----------
 
-This driver is neither supported nor endorsed by Broadcom.
-Use at your own risk.
+This driver is neither supported nor endorsed by Broadcom. Use at your own risk.
