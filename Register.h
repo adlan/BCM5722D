@@ -30,6 +30,7 @@
 #define DEVICEID_BCM5787M                 0x1693
 #define DEVICEID_BCM5906                  0x1712
 #define DEVICEID_BCM5906M                 0x1713
+#define DEVICEID_BCM57788                 0x1691
 
 #define PHYID_MODEL_5754_5787             0x0E
 #define PHYID_MODEL_5755                  0x0C
@@ -638,7 +639,7 @@ enum {
 #define GCR_MISCCFG_CORECLOCKRST          BIT(0)
 #define GCR_MISCCFG_TIMERPSCALERMASK      0x000000FE
 #define GCR_MISCCFG_TIMERPSCALERSHFT      1
-#define GCR_MISCCFG_PHYIDDQ               BIT(20)
+#define GCR_MISCCFG_PHYIDDQ               BIT(21)
 #define GCR_MISCCFG_GPHYPWRDWN            BIT(26)
 #define GCR_MISCCFG_DISABLEGRCRST         BIT(29)
 #define GCR_MISCCFG_TP_66MHZ              (0x41 << GCR_MISCCFG_TIMERPSCALERSHFT)
@@ -647,8 +648,6 @@ enum {
 #define GCR_MISCLCLCTL                    0x00006808
 #define GCR_MISCLCLCTL_IRQONATTN          BIT(3)
 #define GCR_MISCLCLCTL_GPIO_UART_SEL      BIT(4)
-#define GCR_MISCLCLCTL_GPIO3_IN           BIT(5)
-#define GCR_MISCLCLCTL_GPIO3_OUT          BIT(6)
 #define GCR_MISCLCLCTL_GPIO_OUTE0         BIT(11)
 #define GCR_MISCLCLCTL_GPIO_OUTE1         BIT(12)
 #define GCR_MISCLCLCTL_GPIO_OUTE2         BIT(13)
@@ -729,17 +728,17 @@ enum {
 #define PHY_AUTONEGADVERT_802_3           BIT(0)
 #define PHY_AUTONEGADVERT_10HD            BIT(5)
 #define PHY_AUTONEGADVERT_10FD            BIT(6)
-#define PHY_AUTONEGADVERT_100FD           BIT(7)
-#define PHY_AUTONEGADVERT_100HD           BIT(8)
+#define PHY_AUTONEGADVERT_100HD           BIT(7)
+#define PHY_AUTONEGADVERT_100FD           BIT(8)
 #define PHY_AUTONEGADVERT_PAUSECAP        BIT(10)
 #define PHY_AUTONEGADVERT_ASYMPAUSE       BIT(11)
 
 // Auto-Negotiation Link Partner Ability Register
 #define PHY_AUTONEGPARTNER                0x05
-#define PHY_AUTONEGPARTNER_10FD           BIT(5)
-#define PHY_AUTONEGPARTNER_10HD           BIT(6)
-#define PHY_AUTONEGPARTNER_100FD          BIT(7)
-#define PHY_AUTONEGPARTNER_100HD          BIT(8)
+#define PHY_AUTONEGPARTNER_10HD           BIT(5)
+#define PHY_AUTONEGPARTNER_10FD           BIT(6)
+#define PHY_AUTONEGPARTNER_100HD          BIT(7)
+#define PHY_AUTONEGPARTNER_100FD          BIT(8)
 #define PHY_AUTONEGPARTNER_PAUSECAP       BIT(10)
 #define PHY_AUTONEGPARTNER_ASYMPAUSE      BIT(11)
 
@@ -750,8 +749,8 @@ enum {
 
 // 1000BASE-T Status Register
 #define PHY_1000BASETSTS                  0x0A
-#define PHY_1000BASETSTS_PARTNERFD        BIT(10)
-#define PHY_1000BASETSTS_PARTNERHD        BIT(11)
+#define PHY_1000BASETSTS_PARTNERHD        BIT(10)
+#define PHY_1000BASETSTS_PARTNERFD        BIT(11)
 
 #define PHY_DSPRWPORT                     0x15
 

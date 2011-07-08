@@ -687,7 +687,7 @@ void BCM5722D::resolveOperatingSpeedAndLinkDuplex(UInt16 status)
 
       media.speed = kLinkSpeed1000;
       media.duplex = kLinkDuplexFull;
-      currentMediumIndex = kMediumTypeIndex1000HD;
+      currentMediumIndex = kMediumTypeIndex1000FD;
 
       break;
 
