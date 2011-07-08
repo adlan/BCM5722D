@@ -613,7 +613,6 @@ enum {
 // MSI Mode Register
 #define MSI_MODE                          0x00006000
 #define MSI_MODE_ENABLE                   BIT(1)
-#define MSI_MODE_1SHOT_DISABLE            BIT(5)
 
 // MSI Status Register
 #define MSI_STATUS                        0x00006004
