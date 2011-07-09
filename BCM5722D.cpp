@@ -36,6 +36,7 @@ static const struct SupportedDevice
   { DEVICEID_BCM5787M, "BCM5787M NetLink (TM) Gigabit Ethernet" },
   { DEVICEID_BCM5906,  "BCM5906 NetLink (TM) Fast Ethernet" },
   { DEVICEID_BCM5906M, "BCM5906M NetLink (TM) Fast Ethernet" },
+  { DEVICEID_BCM57788, "BCM57788 NetLink (TM) Gigabit Ethernet" },
   { 0, NULL }
 };
 

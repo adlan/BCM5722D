@@ -14,6 +14,7 @@ It supports the following models:
 * BCM5754M
 * BCM5755
 * BCM5755M
+* BCM57788
 * BCM5787
 * BCM5787M
 * BCM5906
