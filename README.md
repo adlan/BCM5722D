@@ -3,7 +3,7 @@ BCM5722D
 
 Unofficial Mac OS X driver for Broadcom's BCM5722 NetXtreme and NetLink
 family of gigabit Ethernet controllers. It is implemented based on the
-BCM5722 Programmer\'s Guide provided in Broadcom\'s open source developer
+BCM5722 Programmer's Guide provided in Broadcom's open source developer
 resource. Additional information is gleaned from Linux(tg3) and
 FreeBSD(if\_bge) driver.
 
@@ -38,7 +38,7 @@ Please report any issues you found at <https://github.com/adlan/BCM5722D/issues>
 Contributing
 ------------
 
-Visit the [project\'s wiki page](https://github.com/adlan/BCM5722D/wiki)
+Visit the [project's wiki page](https://github.com/adlan/BCM5722D/wiki)
 for details.
 
 License
